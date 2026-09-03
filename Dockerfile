@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -8,9 +8,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && ln -sf /usr/bin/python3.11 /usr/bin/python
 
 WORKDIR /app
-RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git .
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cu121 \
+# Pinned release + pinned torch line (NOT master + floating torch — that combination
+# shipped an import-time incompatibility: comfy-kitchen's custom_op schemas need a
+# newer torch than the old cu121 resolution provided).
+RUN git clone --branch v0.34.0 --depth 1 https://github.com/comfyanonymous/ComfyUI.git .
+RUN pip install --no-cache-dir torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 \
+        --index-url https://download.pytorch.org/whl/cu124 \
     && pip install --no-cache-dir -r requirements.txt
+
+# Build-time import smoke test: if the torch/comfy-kitchen pairing is incompatible,
+# FAIL THE BUILD with the real traceback — never ship an image that crash-loops.
+RUN python3 -c "import comfy.utils; print('comfy import OK')"
 
 # Download Stable Diffusion XL base in the BACKGROUND at startup (~6.9 GB),
 # so the UI is healthy immediately. Set DOWNLOAD_SDXL=false to skip.
