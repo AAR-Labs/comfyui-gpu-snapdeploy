@@ -17,9 +17,18 @@ RUN pip install --no-cache-dir torch==2.9.0 torchvision==0.24.0 torchaudio==2.9.
         --index-url https://download.pytorch.org/whl/cu126 \
     && pip install --no-cache-dir -r requirements.txt
 
+# kornia's @torch.jit.script decorators segfault the TorchScript compiler under
+# torch 2.9 at import time (kornia/geometry/epipolar/essential.py:90, hit when
+# ComfyUI loads its post-processing nodes). ComfyUI runs eager + pytorch attention
+# and never needs TorchScript, so disable the JIT: scripted functions become plain
+# Python passthroughs with identical results.
+ENV PYTORCH_JIT=0
+
 # Build-time import smoke test: if the torch/comfy-kitchen pairing is incompatible,
 # FAIL THE BUILD with the real traceback — never ship an image that crash-loops.
-RUN python3 -c "import comfy.utils; print('comfy import OK')"
+# kornia included: it is imported at server start (not by comfy.utils), which is
+# exactly where the jit.script segfault slipped past the original test.
+RUN python3 -c "import comfy.utils; import kornia; print('comfy + kornia import OK')"
 
 # Download Stable Diffusion XL base in the BACKGROUND at startup (~6.9 GB),
 # so the UI is healthy immediately. Set DOWNLOAD_SDXL=false to skip.
