@@ -13,7 +13,7 @@ WORKDIR /app
 # newer torch than the old cu121 resolution provided; 2.6/cu124 also failed the
 # import smoke test — comfy-kitchen needs the >=2.7 rewritten infer_schema).
 RUN git clone --branch v0.34.0 --depth 1 https://github.com/comfyanonymous/ComfyUI.git .
-RUN pip install --no-cache-dir torch==2.13.0 torchvision==0.28.0 torchaudio==2.13.0 \
+RUN pip install --no-cache-dir torch==2.13.0 torchvision==0.28.0 torchaudio==2.9.0 \
         --index-url https://download.pytorch.org/whl/cu126 \
     && pip install --no-cache-dir -r requirements.txt
 
