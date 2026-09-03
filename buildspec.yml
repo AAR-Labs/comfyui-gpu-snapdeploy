@@ -13,7 +13,7 @@ phases:
       - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
       - DOCKERHUB_CREDS=$(aws secretsmanager get-secret-value --secret-id dockerhub/credentials --query SecretString --output text)
       - echo "$DOCKERHUB_CREDS" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['password'])" | docker login --username $(echo "$DOCKERHUB_CREDS" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['username'])") --password-stdin
-      - docker pull nvidia/cuda:12.1.1-runtime-ubuntu22.04
+      - docker pull nvidia/cuda:12.4.1-runtime-ubuntu22.04
   build:
     commands:
       - docker build -t "$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG" .
